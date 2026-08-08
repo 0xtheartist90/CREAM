@@ -38,3 +38,6 @@ next-env.d.ts
 # local tooling
 .claude/
 .env*
+
+# dev harness sample data (may contain real finances)
+public/sample.json

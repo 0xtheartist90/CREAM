@@ -93,7 +93,10 @@ interface StoreValue {
     resetData: () => void;
 }
 
-const StoreContext = createContext<StoreValue | null>(null);
+/** Exported for the dev-only harness (src/app/dev-ledger) that renders views
+ *  with a mocked store — the auth wall makes them unreachable otherwise. */
+export const StoreContext = createContext<StoreValue | null>(null);
+export type { StoreValue };
 
 export function useFinance(): StoreValue {
     const ctx = useContext(StoreContext);

@@ -234,17 +234,24 @@ export function TransactionsView({
 
             {filtered.length ? (
                 <>
-                    {/* Desktop ledger */}
+                    {/* Desktop ledger.
+                        `table-fixed` is load-bearing: with auto layout, long
+                        imported descriptions/notes expand their column until
+                        the amount is clipped by the card's overflow-hidden.
+                        Fixed layout pins every column so truncation happens
+                        inside cells instead. */}
                     <Card padded={false} className='hidden overflow-hidden md:block'>
-                        <table className='w-full'>
+                        <table className='w-full table-fixed'>
                             <thead>
                                 <tr className='border-line text-text-muted border-b text-left text-[11.5px]'>
-                                    <th className='px-4 py-2.5 font-medium'>Date</th>
+                                    <th className='w-[106px] px-4 py-2.5 font-medium'>Date</th>
                                     <th className='px-4 py-2.5 font-medium'>Description</th>
-                                    <th className='px-4 py-2.5 font-medium'>Category</th>
-                                    <th className='px-4 py-2.5 font-medium'>Account</th>
-                                    <th className='px-4 py-2.5 text-right font-medium'>Amount</th>
-                                    <th className='w-[104px] px-4 py-2.5' />
+                                    <th className='hidden w-[128px] px-4 py-2.5 font-medium xl:table-cell'>
+                                        Category
+                                    </th>
+                                    <th className='hidden w-[178px] px-4 py-2.5 font-medium lg:table-cell'>Account</th>
+                                    <th className='w-[124px] px-4 py-2.5 text-right font-medium'>Amount</th>
+                                    <th className='w-[100px] px-4 py-2.5' />
                                 </tr>
                             </thead>
                             <tbody>
@@ -261,7 +268,7 @@ export function TransactionsView({
                                             key={tx.id}
                                             onClick={() => onEdit(tx)}
                                             className='border-line hover:bg-surface-2 group cursor-pointer border-b transition-colors last:border-0'>
-                                            <td className='text-text-muted tnum px-4 py-2.5 text-[12.5px] whitespace-nowrap'>
+                                            <td className='text-text-muted tnum px-4 py-2.5 text-[12px] whitespace-nowrap'>
                                                 {formatDisplayDate(tx.date, { withYear: true })}
                                             </td>
                                             <td className='px-4 py-2.5'>
@@ -276,41 +283,57 @@ export function TransactionsView({
                                                                   : 'muted'
                                                         }
                                                         size='sm'
+                                                        className='shrink-0'
                                                     />
-                                                    <div className='min-w-0'>
+                                                    <div className='min-w-0 flex-1'>
                                                         <div className='flex items-center gap-1.5'>
-                                                            <span className='text-text truncate text-[13px] font-medium'>
+                                                            <span
+                                                                className='text-text block truncate text-[13px] font-medium'
+                                                                title={tx.description}>
                                                                 {tx.description ||
                                                                     (tx.type === 'transfer' ? 'Transfer' : '—')}
                                                             </span>
                                                             {tx.status === 'projected' ? (
-                                                                <Pill tone='accent'>Scheduled</Pill>
+                                                                <Pill tone='accent' className='shrink-0'>
+                                                                    Scheduled
+                                                                </Pill>
                                                             ) : null}
                                                         </div>
+                                                        {/* When the category/account columns are hidden at
+                                                            narrower widths, surface them here instead. */}
+                                                        <p className='text-text-faint truncate text-[11px] xl:hidden'>
+                                                            {tx.type === 'transfer'
+                                                                ? `${account?.name ?? '—'} → ${toAccount?.name ?? '—'}`
+                                                                : `${category?.name ?? 'Uncategorised'} · ${account?.name ?? '—'}`}
+                                                        </p>
                                                         {tx.notes ? (
-                                                            <p className='text-text-faint truncate text-[11px]'>
+                                                            <p
+                                                                className='text-text-faint hidden truncate text-[11px] xl:block'
+                                                                title={tx.notes}>
                                                                 {tx.notes}
                                                             </p>
                                                         ) : null}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className='text-text-muted px-4 py-2.5 text-[12.5px]'>
-                                                {tx.type === 'transfer' ? (
-                                                    <span className='text-text-faint'>—</span>
-                                                ) : (
-                                                    (category?.name ?? 'Uncategorised')
-                                                )}
+                                            <td className='text-text-muted hidden px-4 py-2.5 text-[12.5px] xl:table-cell'>
+                                                <span className='block truncate'>
+                                                    {tx.type === 'transfer' ? '—' : (category?.name ?? 'Uncategorised')}
+                                                </span>
                                             </td>
-                                            <td className='text-text-muted px-4 py-2.5 text-[12.5px]'>
+                                            <td className='text-text-muted hidden px-4 py-2.5 text-[12.5px] lg:table-cell'>
                                                 {tx.type === 'transfer' ? (
-                                                    <span className='flex items-center gap-1'>
-                                                        {account?.name ?? '—'}
-                                                        <ArrowRight className='size-3' />
-                                                        {toAccount?.name ?? '—'}
+                                                    <span
+                                                        className='flex items-center gap-1'
+                                                        title={`${account?.name ?? '—'} → ${toAccount?.name ?? '—'}`}>
+                                                        <span className='truncate'>{account?.name ?? '—'}</span>
+                                                        <ArrowRight className='size-3 shrink-0' />
+                                                        <span className='truncate'>{toAccount?.name ?? '—'}</span>
                                                     </span>
                                                 ) : (
-                                                    (account?.name ?? '—')
+                                                    <span className='block truncate' title={account?.name}>
+                                                        {account?.name ?? '—'}
+                                                    </span>
                                                 )}
                                             </td>
                                             <td
