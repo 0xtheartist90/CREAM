@@ -6,17 +6,22 @@ import {
     Archive,
     ArchiveRestore,
     Check,
+    CloudCheck,
     Download,
+    LogOut,
     Moon,
     Pencil,
     Plus,
+    RefreshCw,
     Shapes,
     Sun,
     Trash2,
     TriangleAlert,
-    Upload
+    Upload,
+    UserRound
 } from 'lucide-react';
 
+import { useAuth } from '@/lib/finance/auth';
 import { CURRENCY_PRESETS } from '@/lib/finance/format';
 import { useFinance } from '@/lib/finance/store';
 import type { Category } from '@/lib/finance/types';
@@ -28,11 +33,14 @@ import { useMoneyFormat } from './money';
 import { Banner, Button, Card, ConfirmDialog, EmptyState, Field, Pill, SectionHeader, Segmented, Select, Toggle } from './ui';
 
 export function SettingsView() {
-    const { db, updateSettings, exportData, importData, resetData, persisted } = useFinance();
+    const { db, updateSettings, exportData, importData, resetData, syncStatus } = useFinance();
+    const { user, signOut } = useAuth();
     const { format } = useMoneyFormat();
 
     const fileRef = useRef<HTMLInputElement>(null);
     const [resetOpen, setResetOpen] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [signOutOpen, setSignOutOpen] = useState(false);
     const [importResult, setImportResult] = useState<{ ok: boolean; errors: string[]; warnings: string[] } | null>(null);
 
     const activeAccounts = db.accounts.filter((a) => !a.archived);
@@ -61,9 +69,13 @@ export function SettingsView() {
     };
 
     const doImport = async (file: File) => {
+        setImporting(true);
+        setImportResult(null);
         const text = await file.text();
-        const result = importData(text);
+        // Import now replaces the rows in Supabase, so this is a real await.
+        const result = await importData(text);
         setImportResult(result);
+        setImporting(false);
         if (fileRef.current) fileRef.current.value = '';
     };
 
@@ -72,16 +84,52 @@ export function SettingsView() {
             <div>
                 <h1 className='text-text text-[20px] font-semibold tracking-tight'>Settings</h1>
                 <p className='text-text-muted mt-0.5 text-[12.5px]'>
-                    Everything is stored locally in this browser. Export regularly to keep a backup.
+                    Your finances sync to your Supabase project. Only view preferences stay on this device.
                 </p>
             </div>
 
-            {!persisted ? (
+            {syncStatus.state === 'error' ? (
                 <Banner tone='negative' icon={<TriangleAlert className='size-4' />}>
-                    Could not write to local storage — your latest changes may not survive a refresh. This usually means
-                    private browsing or a full storage quota.
+                    {syncStatus.error ?? 'A change could not be saved.'} Your screen may be ahead of the database —
+                    reload to see what was actually stored.
                 </Banner>
             ) : null}
+
+            <Card>
+                <SectionHeader title='Account' />
+                <div className='flex flex-wrap items-center justify-between gap-3'>
+                    <div className='flex items-center gap-3'>
+                        <div className='bg-accent-soft text-accent flex size-10 items-center justify-center rounded-[12px]'>
+                            <UserRound className='size-5' />
+                        </div>
+                        <div className='min-w-0'>
+                            <p className='text-text truncate text-[13.5px] font-medium'>{user?.email ?? 'Signed in'}</p>
+                            <p className='text-text-muted mt-0.5 flex items-center gap-1.5 text-[11.5px]'>
+                                {syncStatus.state === 'saving' ? (
+                                    <>
+                                        <RefreshCw className='size-3 animate-spin' />
+                                        Saving {syncStatus.pending} change{syncStatus.pending === 1 ? '' : 's'}…
+                                    </>
+                                ) : syncStatus.state === 'error' ? (
+                                    <>
+                                        <TriangleAlert className='text-negative size-3' />
+                                        Not saved
+                                    </>
+                                ) : (
+                                    <>
+                                        <CloudCheck className='text-positive size-3' />
+                                        All changes saved
+                                    </>
+                                )}
+                            </p>
+                        </div>
+                    </div>
+                    <Button variant='outline' onClick={() => setSignOutOpen(true)}>
+                        <LogOut className='size-3.5' />
+                        Sign out
+                    </Button>
+                </div>
+            </Card>
 
             <div className='grid gap-4 lg:grid-cols-2'>
                 <Card>
@@ -181,7 +229,10 @@ export function SettingsView() {
             <CategoriesSection />
 
             <Card>
-                <SectionHeader title='Backup & restore' subtitle='Your data never leaves this device' />
+                <SectionHeader
+                    title='Backup & restore'
+                    subtitle='Export a JSON snapshot, or replace everything from a previous export'
+                />
 
                 <div className='border-line mb-4 grid grid-cols-2 gap-3 rounded-[12px] border p-3 sm:grid-cols-5'>
                     {[
@@ -203,7 +254,7 @@ export function SettingsView() {
                         <Download className='size-3.5' />
                         Export JSON
                     </Button>
-                    <Button variant='secondary' onClick={() => fileRef.current?.click()}>
+                    <Button variant='secondary' onClick={() => fileRef.current?.click()} loading={importing}>
                         <Upload className='size-3.5' />
                         Import JSON
                     </Button>
@@ -261,8 +312,24 @@ export function SettingsView() {
                 requirePhrase='RESET'
                 message={
                     <>
-                        This permanently deletes every account, transaction, budget and recurring rule stored in this
-                        browser. Export a backup first if you might want this data back — it cannot be recovered.
+                        This permanently deletes every account, transaction, budget and recurring rule from your
+                        Supabase database. Export a backup first if you might want this data back — it cannot be
+                        recovered.
+                    </>
+                }
+            />
+
+            <ConfirmDialog
+                open={signOutOpen}
+                onClose={() => setSignOutOpen(false)}
+                onConfirm={() => void signOut()}
+                title='Sign out'
+                confirmLabel='Sign out'
+                tone='primary'
+                message={
+                    <>
+                        Sign out of <strong className='text-text'>{user?.email}</strong>? Your data stays safely in
+                        Supabase and will be here when you sign back in.
                     </>
                 }
             />

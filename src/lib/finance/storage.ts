@@ -9,7 +9,6 @@ import type {
     UiPrefs
 } from './types';
 
-export const STORAGE_KEY = 'cream-money.db';
 export const SCHEMA_VERSION = 1;
 
 export function makeId(prefix = 'id'): string {
@@ -274,41 +273,13 @@ export function validateAndNormalise(raw: unknown): ValidationResult {
     };
 }
 
-/* ── Persistence ────────────────────────────────────────────────────────── */
-
-export function loadDB(): FinanceDB {
-    if (typeof window === 'undefined') return emptyDB();
-    try {
-        const raw = window.localStorage.getItem(STORAGE_KEY);
-        if (!raw) return emptyDB();
-        const parsed = JSON.parse(raw);
-        const result = validateAndNormalise(migrate(parsed));
-
-        return result.ok && result.db ? result.db : emptyDB();
-    } catch {
-        // A corrupt blob should not brick the app; fall back to an empty DB.
-        return emptyDB();
-    }
-}
-
-export function saveDB(db: FinanceDB): boolean {
-    if (typeof window === 'undefined') return false;
-    try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-export function clearDB(): void {
-    if (typeof window === 'undefined') return;
-    window.localStorage.removeItem(STORAGE_KEY);
-}
+/* ── Migration ──────────────────────────────────────────────────────────────
+   Financial data now lives in Supabase (see remote.ts); localStorage holds
+   only view preferences (see ui-prefs.ts). This module remains the shared
+   validation + seeding layer used by both the loader and JSON import.        */
 
 /** Forward-migration hook. v1 is the initial schema, so this is a pass-through. */
-function migrate(raw: unknown): unknown {
+export function migrate(raw: unknown): unknown {
     if (!isObj(raw)) return raw;
     const version = NUM(raw.version, 1);
     if (version >= SCHEMA_VERSION) return raw;

@@ -38,11 +38,14 @@ export const viewport: Viewport = {
 const THEME_BOOTSTRAP = `
 (function(){
   try {
-    var raw = localStorage.getItem('cream-money.db');
+    // The authoritative theme lives in the Supabase settings row, which is not
+    // available until after login. UI preferences cache it locally purely so
+    // the first paint uses the right background.
+    var raw = localStorage.getItem('cream-money.ui');
     var theme = 'dark';
     if (raw) {
       var parsed = JSON.parse(raw);
-      if (parsed && parsed.settings && parsed.settings.theme === 'light') theme = 'light';
+      if (parsed && parsed.theme === 'light') theme = 'light';
     }
     if (theme === 'dark') document.documentElement.classList.add('dark');
     document.documentElement.style.colorScheme = theme;

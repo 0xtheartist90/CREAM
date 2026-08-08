@@ -2,10 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { TriangleAlert } from 'lucide-react';
+
+import { useAuth } from '@/lib/finance/auth';
 import { useFinance } from '@/lib/finance/store';
 import type { AccountType, Transaction, TransactionType } from '@/lib/finance/types';
 
 import { AppShell, type QuickAddAction } from './app-shell';
+import { AuthScreen, SetupScreen } from './auth-screen';
 import { Dashboard } from './dashboard';
 import { AccountForm, RecurringForm, TransactionForm } from './forms';
 import { AccountsView } from './view-accounts';
@@ -25,7 +29,8 @@ interface TxFormState {
 const CLOSED_TX: TxFormState = { open: false, editing: null, type: 'expense', status: 'actual' };
 
 export function FinanceApp() {
-    const { db, hydrated, updateUi } = useFinance();
+    const { db, hydrated, updateUi, loadError, reload } = useFinance();
+    const { ready: authReady, user, configured, missingEnv } = useAuth();
 
     const [view, setView] = useState('overview');
     const [txForm, setTxForm] = useState<TxFormState>(CLOSED_TX);
@@ -121,7 +126,41 @@ export function FinanceApp() {
         }
     }, [view, editTransaction, openTransaction, navigate, txById]);
 
-    /* Avoid rendering data-driven UI until localStorage has been read. */
+    /* Env vars absent — show setup instructions rather than a blank page. */
+    if (!configured) return <SetupScreen missing={missingEnv} />;
+
+    /* Waiting on the initial session lookup. */
+    if (!authReady) {
+        return (
+            <div className='bg-bg flex min-h-screen items-center justify-center'>
+                <div className='text-text-faint text-[13px]'>Loading…</div>
+            </div>
+        );
+    }
+
+    if (!user) return <AuthScreen />;
+
+    /* Signed in, but the first fetch failed (commonly: migration not yet run). */
+    if (loadError) {
+        return (
+            <div className='bg-bg flex min-h-screen items-center justify-center p-4'>
+                <div className='bg-surface border-line w-full max-w-md rounded-[16px] border p-5'>
+                    <div className='bg-negative-soft text-negative mb-3 flex size-10 items-center justify-center rounded-[12px]'>
+                        <TriangleAlert className='size-5' />
+                    </div>
+                    <h2 className='text-text text-[16px] font-semibold'>Could not load your data</h2>
+                    <p className='text-text-muted mt-1.5 text-[13px] leading-relaxed'>{loadError}</p>
+                    <button
+                        onClick={reload}
+                        className='bg-accent hover:bg-accent-hover mt-4 h-10 w-full cursor-pointer rounded-[11px] text-[13.5px] font-medium text-white transition-colors'>
+                        Try again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    /* Avoid rendering data-driven UI until the dataset has arrived. */
     if (!hydrated) {
         return (
             <div className='bg-bg flex min-h-screen items-center justify-center'>
