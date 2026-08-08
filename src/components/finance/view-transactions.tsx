@@ -259,7 +259,8 @@ export function TransactionsView({
                                     return (
                                         <tr
                                             key={tx.id}
-                                            className='border-line hover:bg-surface-2 group border-b transition-colors last:border-0'>
+                                            onClick={() => onEdit(tx)}
+                                            className='border-line hover:bg-surface-2 group cursor-pointer border-b transition-colors last:border-0'>
                                             <td className='text-text-muted tnum px-4 py-2.5 text-[12.5px] whitespace-nowrap'>
                                                 {formatDisplayDate(tx.date, { withYear: true })}
                                             </td>
@@ -325,7 +326,8 @@ export function TransactionsView({
                                                     ? format(tx.amount)
                                                     : format(value, { signed: true })}
                                             </td>
-                                            <td className='px-4 py-2.5'>
+                                            {/* The row itself opens the editor; these must not bubble. */}
+                                            <td className='px-4 py-2.5' onClick={(e) => e.stopPropagation()}>
                                                 <div className='flex items-center justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100'>
                                                     <Button
                                                         size='icon'
@@ -366,7 +368,11 @@ export function TransactionsView({
                             const value = tx.type === 'income' ? tx.amount : -tx.amount;
 
                             return (
-                                <Card key={tx.id} padded={false} className='p-3'>
+                                <Card
+                                    key={tx.id}
+                                    padded={false}
+                                    className='cursor-pointer p-3 transition-colors active:bg-surface-2'
+                                    onClick={() => onEdit(tx)}>
                                     <div className='flex items-start gap-3'>
                                         <IconTile
                                             name={tx.type === 'transfer' ? 'Repeat' : category?.icon}
@@ -413,7 +419,10 @@ export function TransactionsView({
                                                         <Pill tone='accent'>Scheduled</Pill>
                                                     ) : null}
                                                 </div>
-                                                <div className='flex items-center gap-0.5'>
+                                                {/* The card itself opens the editor; these must not bubble. */}
+                                                <div
+                                                    className='flex items-center gap-0.5'
+                                                    onClick={(e) => e.stopPropagation()}>
                                                     <Button
                                                         size='icon'
                                                         variant='ghost'
