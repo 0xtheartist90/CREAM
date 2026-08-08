@@ -1,12 +1,12 @@
-import HomePage from '@/app/(delete-this-and-modify-page.tsx)/HomePage';
+import { FinanceApp } from '@/components/finance/app';
+import { FinanceProvider } from '@/lib/finance/store';
 
-/**
- * The main page component that renders the HomePage component.
- *
- * @returns {JSX.Element} The rendered HomePage component.
- */
 const Page = () => {
-    return <HomePage />;
+    return (
+        <FinanceProvider>
+            <FinanceApp />
+        </FinanceProvider>
+    );
 };
 
 export default Page;

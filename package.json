@@ -1,8 +1,8 @@
 {
-  "name": "nextjs-16-starter-shadcn",
-  "version": "1.0.0",
-  "private": false,
-  "website": "https://nextjs-16-starter-shadcn.vercel.app/",
+  "name": "cream-money",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Client-side personal finance app: accounts, pockets, budgets, cash-flow and a 12-month net worth projection. All data stays in the browser.",
   "license": "MIT",
   "scripts": {
     "dev": "next dev --turbopack",
@@ -55,7 +55,7 @@
     "geist": "1.7.2",
     "input-otp": "1.4.2",
     "lucide-react": "1.18.0",
-    "next": "16.2.9",
+    "next": "16.3.0",
     "next-themes": "0.4.6",
     "react": "19.2.7",
     "react-day-picker": "10.0.1",
@@ -72,7 +72,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "4.3.1",
+    "@tailwindcss/postcss": "4.3.3",
     "@trivago/prettier-plugin-sort-imports": "6.0.2",
     "@types/node": "25.9.3",
     "@types/react": "19.2.17",
@@ -82,10 +82,10 @@
     "eslint-config-next": "16.2.9",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-tailwindcss": "3.18.3",
-    "postcss": "8.5.15",
+    "postcss": "8.5.26",
     "prettier": "3.8.4",
     "prettier-plugin-tailwindcss": "0.8.0",
-    "tailwindcss": "4.3.1",
+    "tailwindcss": "4.3.3",
     "tailwindcss-animate": "1.0.7",
     "typescript": "6.0.3"
   },
