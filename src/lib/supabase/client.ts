@@ -65,8 +65,11 @@ export function describeError(error: unknown): string {
     const e = error as { message?: string; code?: string; details?: string; hint?: string };
 
     // The two failures most likely to hit a fresh install, translated into
-    // something actionable rather than a raw PostgREST code.
-    if (e.code === '42P01') {
+    // something actionable rather than a raw PostgREST code. Postgres itself
+    // reports a missing table as 42P01; PostgREST reports it as PGRST205
+    // ("could not find the table in the schema cache") — both mean the
+    // migration has not been run.
+    if (e.code === '42P01' || e.code === 'PGRST205') {
         return 'Database tables are missing. Run the SQL migration in your Supabase project (supabase/migrations/0001_init.sql).';
     }
     if (e.code === '42501' || e.message?.includes('row-level security')) {
